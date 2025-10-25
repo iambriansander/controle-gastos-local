@@ -1,360 +1,255 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Controle de Gastos</title>
+  <meta name="description" content="Controle simples de entradas, saídas, itens e importação de extratos (CSV/OFX) com PWA."/>
   <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#0f172a">
-  <link rel="icon" href="icons/icon-192.png">
+  <meta name="theme-color" content="#0f766e" />
+  <link rel="icon" href="icons/icon-192.png" type="image/png"/>
+
   <style>
     :root {
-      --bg: #0f172a;
-      --card: #111827;
+      --bg: #0b1215;
+      --card: #0f1720;
       --muted: #94a3b8;
+      --border: #1f2937;
+      --primary: #0ea5a0;
+      --primary-2: #14b8a6;
       --text: #e5e7eb;
-      --accent: #22c55e;
       --danger: #ef4444;
+      --ok: #22c55e;
       --warn: #f59e0b;
-      --input: #1f2937;
-      --border: #334155;
     }
     * { box-sizing: border-box; }
-    html, body { height: 100%; }
     body {
-      margin: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
-      color: var(--text); background: linear-gradient(120deg,#0b1023,#0c1229 40%,#0a0f22 100%);
+      margin: 0; background: linear-gradient(135deg, #071018, #091721);
+      color: var(--text); font-family: Inter, system-ui, Arial, sans-serif;
     }
     header {
-      padding: 20px; border-bottom: 1px solid var(--border);
-      background: rgba(17,24,39,.5); position: sticky; top:0; backdrop-filter: blur(8px); z-index: 10;
+      padding: 20px 16px; position: sticky; top: 0; z-index: 10;
+      background: rgba(7,16,24,0.7); backdrop-filter: blur(6px); border-bottom: 1px solid var(--border);
     }
-    h1 { margin: 0; font-size: 20px; }
-    .container { max-width: 1180px; margin: 0 auto; padding: 16px; }
-    .tabs { display: flex; gap: 8px; flex-wrap: wrap; margin: 12px 0 20px; }
+    .container { max-width: 1100px; margin: 0 auto; padding: 0 12px; }
+    h1 { margin: 0; font-size: 22px; font-weight: 600; }
+    .sub { color: var(--muted); font-size: 13px; margin-top: 4px; }
+
+    .tabs {
+      display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px;
+    }
     .tab-btn {
-      border: 1px solid var(--border); background: var(--card); color: var(--text);
-      padding: 8px 12px; border-radius: 8px; cursor: pointer;
+      background: #0b1220; color: var(--text); border: 1px solid var(--border);
+      padding: 8px 12px; border-radius: 8px; cursor: pointer; font-size: 14px;
     }
-    .tab-btn.active { border-color: var(--accent); outline: 2px solid rgba(34,197,94,.2); }
+    .tab-btn.active {
+      background: linear-gradient(135deg, #0b2a2a, #0a3734);
+      border-color: #145a56;
+    }
+
+    main { padding: 16px 0 40px; }
     .card {
-      background: radial-gradient(1200px 400px at 0% -10%, rgba(34,197,94,.08), transparent 40%), var(--card);
-      border: 1px solid var(--border); border-radius: 12px; padding: 16px; margin-bottom: 16px;
+      background: linear-gradient(180deg, #0c121a, #0b141a);
+      border: 1px solid var(--border);
+      border-radius: 12px; padding: 16px; margin-bottom: 16px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.25);
     }
-    .grid { display: grid; gap: 12px; }
-    .grid-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-    .grid-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-    .grid-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
-    @media (max-width: 900px){ .grid-4{ grid-template-columns: 1fr 1fr; } }
-    @media (max-width: 700px){ .grid-3,.grid-2,.grid-4{ grid-template-columns: 1fr; } }
-    label { font-size: 12px; color: var(--muted); display:block; margin-bottom: 6px; }
-    input, select, textarea {
-      width: 100%; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--border);
-      background: var(--input); color: var(--text);
-    }
-    input[type="date"] { padding: 8px 10px; }
-    .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
-    .btn {
-      background: var(--accent); color: #052e16; border: none; padding: 10px 14px; border-radius: 10px; cursor: pointer; font-weight: 600;
-    }
-    .btn.secondary { background: #0ea5e9; color: #022c3a; }
-    .btn.ghost { background: transparent; color: var(--text); border: 1px solid var(--border); }
-    .btn.danger { background: var(--danger); color: #3b0a0a; }
-    table { width: 100%; border-collapse: collapse; }
-    th, td { border-bottom: 1px solid var(--border); padding: 10px; text-align: left; font-size: 14px; }
-    th { color: #cbd5e1; font-weight: 600; }
-    .tag { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 12px; background: #0b1220; border:1px solid var(--border); color: var(--muted); }
-    .kpi { display:grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap:12px; }
-    .kpi .card { display:flex; flex-direction:column; gap:6px; }
-    .kpi .val { font-size: 20px; font-weight: 700; }
-    .pill { font-size: 12px; padding: 2px 8px; border-radius: 999px; border:1px solid var(--border); color: var(--muted); }
-    .warn { color: #fde68a; }
-    .ok { color: #86efac; }
-    .neg { color: #fca5a5; }
-    .muted { color: var(--muted); }
-    .right { text-align: right; }
+    .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+    .row.wrap { flex-wrap: wrap; }
+    .align-end { align-items: end; }
     .mt8 { margin-top: 8px; }
     .mt12 { margin-top: 12px; }
     .mt16 { margin-top: 16px; }
     .mt20 { margin-top: 20px; }
+    .muted { color: var(--muted); font-size: 12px; }
+    .grid { display: grid; gap: 12px; }
+    .grid-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .grid-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .grid-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    @media (max-width: 900px) {
+      .grid-4 { grid-template-columns: 1fr 1fr; }
+    }
+    @media (max-width: 600px) {
+      .grid-3, .grid-4, .grid-2 { grid-template-columns: 1fr; }
+    }
+    label { font-size: 12px; color: var(--muted); display: block; margin-bottom: 6px; }
+    input, select, textarea {
+      width: 100%; padding: 10px 12px; border-radius: 8px; border: 1px solid var(--border);
+      background: #0b1220; color: var(--text); font-size: 14px;
+    }
+    textarea { min-height: 80px; }
+    .btn {
+      background: linear-gradient(135deg, var(--primary), var(--primary-2));
+      border: none; color: #062a2a; font-weight: 700; letter-spacing: .2px;
+      padding: 10px 12px; border-radius: 8px; cursor: pointer;
+    }
+    .btn.alt { background: transparent; border: 1px solid var(--border); color: var(--text); }
+    .btn.danger { background: linear-gradient(135deg, #c0392b, #ef4444); color: white; }
+
+    table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    th, td { border-bottom: 1px solid var(--border); padding: 10px 8px; text-align: left; }
+    th { color: var(--muted); font-weight: 500; }
+    tbody tr:hover { background: rgba(255,255,255,0.02); }
+
+    .pill { font-size: 12px; padding: 3px 8px; border-radius: 999px; border: 1px solid var(--border); color: var(--muted); }
+    .pill.ok { color: #10b981; border-color: #0f5132; background: rgba(16,185,129,0.08); }
+    .pill.warn { color: #f59e0b; border-color: #7c5d0b; background: rgba(245,158,11,0.08); }
+    .pill.bad { color: #ef4444; border-color: #7c1f0b; background: rgba(239,68,68,0.08); }
+
+    .kpi { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 12px; }
+    .kpi .card { padding: 14px; }
+    .kpi h3 { margin: 0 0 6px; font-size: 13px; color: var(--muted); font-weight: 500; }
+    .kpi .val { font-size: 20px; font-weight: 700; }
+
+    .preview { max-height: 300px; overflow: auto; border: 1px solid var(--border); border-radius: 8px; }
+    .tag { padding: 2px 6px; border-radius: 6px; border: 1px solid var(--border); font-size: 12px; color: var(--muted); }
+
+    .footer { text-align: center; color: var(--muted); font-size: 12px; margin-top: 20px; }
   </style>
 </head>
 <body>
   <header>
     <div class="container">
-      <h1>Controle de Gastos • Local (PWA)</h1>
-      <div class="tabs">
+      <h1>Controle de Gastos</h1>
+      <div class="sub">Entradas, Saídas, Itens, Importação de extratos (Inter/Nubank/Mercado Pago) e PWA</div>
+      <div class="tabs mt12">
         <button class="tab-btn active" data-tab="dashboard">Dashboard</button>
-        <button class="tab-btn" data-tab="parametros">Parâmetros</button>
         <button class="tab-btn" data-tab="entradas">Entradas</button>
         <button class="tab-btn" data-tab="saidas">Saídas</button>
         <button class="tab-btn" data-tab="itens">Itens</button>
         <button class="tab-btn" data-tab="transferencias">Transferências</button>
         <button class="tab-btn" data-tab="orcamento">Orçamento</button>
         <button class="tab-btn" data-tab="importacao">Importação</button>
-        <button class="tab-btn" data-tab="dados">Dados</button>
+        <button class="tab-btn" data-tab="config">Configurações</button>
       </div>
     </div>
   </header>
 
   <main class="container">
     <!-- DASHBOARD -->
-    <section id="dashboard" class="tab card">
+    <section id="dashboard" class="tab">
       <div class="kpi">
         <div class="card">
-          <div class="muted">Entradas (mês)</div>
-          <div class="val" id="kpiEntradas">R$ 0,00</div>
+          <h3>Entradas (mês)</h3>
+          <div class="val" id="kpiIn">R$ 0,00</div>
         </div>
         <div class="card">
-          <div class="muted">Saídas (mês)</div>
-          <div class="val" id="kpiSaidas">R$ 0,00</div>
+          <h3>Saídas (mês)</h3>
+          <div class="val" id="kpiOut">R$ 0,00</div>
         </div>
         <div class="card">
-          <div class="muted">Saldo (mês)</div>
-          <div class="val" id="kpiSaldo">R$ 0,00</div>
+          <h3>Saldo (mês)</h3>
+          <div class="val" id="kpiBal">R$ 0,00</div>
         </div>
         <div class="card">
-          <div class="muted">Ticket médio</div>
-          <div class="val" id="kpiTicket">R$ 0,00</div>
+          <h3>Itens comprados (mês)</h3>
+          <div class="val" id="kpiItems">0</div>
         </div>
       </div>
 
-      <div class="grid grid-2 mt16">
-        <div class="card">
-          <div class="row">
-            <div style="flex:1">
-              <label>Mês/Ano</label>
-              <input type="month" id="dashMes" />
-            </div>
-            <div>
-              <label>&nbsp;</label>
-              <button class="btn ghost" onclick="render()">Atualizar</button>
-            </div>
-          </div>
-          <h3 style="margin:10px 0 6px;font-size:16px">Despesas por categoria</h3>
-          <table id="tblCats">
-            <thead><tr><th>Categoria</th><th class="right">Valor</th></tr></thead>
-            <tbody></tbody>
-            <tfoot><tr><th>Total</th><th class="right" id="totCat">R$ 0,00</th></tr></tfoot>
-          </table>
+      <div class="card mt16">
+        <div class="row wrap">
+          <div><label>Mês/Ano</label><input type="month" id="dashMonth"></div>
+          <div><label>Conta</label><select id="dashAccount"></select></div>
+          <div class="row align-end"><button class="btn" onclick="refreshDashboard()">Atualizar</button></div>
         </div>
-
-        <div class="card">
-          <h3 style="margin:10px 0 6px;font-size:16px">Top Lojas (mês)</h3>
-          <table id="tblLojas">
-            <thead><tr><th>Loja</th><th class="right">Valor</th></tr></thead>
-            <tbody></tbody>
-          </table>
+        <div class="mt12">
+          <span class="pill ok">Entradas</span>
+          <span class="pill bad">Saídas</span>
+          <span class="pill warn">Orçamento</span>
         </div>
-      </div>
-    </section>
-
-    <!-- PARAMETROS -->
-    <section id="parametros" class="tab card" style="display:none">
-      <h3 style="margin:0 0 10px;font-size:16px">Parâmetros</h3>
-      <div class="grid grid-3">
-        <div>
-          <label>Moeda (símbolo)</label>
-          <input id="pMoeda" value="R$" />
+        <div class="mt12">
+          <div id="reportCat"></div>
         </div>
-        <div>
-          <label>Formato de data (apenas visual)</label>
-          <select id="pFormatoData">
-            <option value="pt-BR">dd/mm/aaaa</option>
-            <option value="en-US">mm/dd/yyyy</option>
-          </select>
-        </div>
-        <div>
-          <label>Saldo inicial por conta (JSON)</label>
-          <input id="pSaldoInicial" placeholder='{"Banco Inter": 0, "Nubank": 0, "Mercado Pago": 0}' />
-        </div>
-      </div>
-      <div class="grid grid-3 mt12">
-        <div>
-          <label>Categorias (uma por linha)</label>
-          <textarea id="pCategorias" rows="6">Moradia
-Alimentação
-Transporte
-Lazer
-Saúde
-Educação
-Impostos
-Investimentos
-Outros</textarea>
-        </div>
-        <div>
-          <label>Formas de pagamento (uma por linha)</label>
-          <textarea id="pPagamentos" rows="6">Cartão Crédito
-Cartão Débito
-Pix
-Dinheiro
-Boleto</textarea>
-        </div>
-        <div>
-          <label>Contas/Carteiras (uma por linha)</label>
-          <textarea id="pContas" rows="6">Banco Inter
-Nubank
-Mercado Pago</textarea>
-        </div>
-      </div>
-      <div class="grid grid-2 mt12">
-        <div>
-          <label>Centros de custo / Pessoas (uma por linha)</label>
-          <textarea id="pCentros" rows="6">Pessoal
-Família
-Empresa</textarea>
-        </div>
-        <div>
-          <label>Lojas / Fornecedores frequentes (uma por linha)</label>
-          <textarea id="pLojas" rows="6">Mercado X
-Farmácia Y
-Posto Z</textarea>
-        </div>
-      </div>
-      <div class="mt12">
-        <button class="btn" onclick="saveParams()">Salvar parâmetros</button>
-        <button class="btn ghost" onclick="resetAll()">Resetar tudo</button>
       </div>
     </section>
 
     <!-- ENTRADAS -->
     <section id="entradas" class="tab card" style="display:none">
-      <h3 style="margin:0 0 10px;font-size:16px">Lançar entrada</h3>
-      <div class="grid grid-4">
-        <div><label>Data</label><input type="date" id="eData" /></div>
-        <div><label>Conta destino</label><select id="eConta"></select></div>
-        <div><label>Categoria</label><input id="eCategoria" placeholder="Salário, Reembolso, etc." /></div>
-        <div><label>Valor</label><input id="eValor" type="number" step="0.01" /></div>
+      <h3>Entradas</h3>
+      <div class="row wrap">
+        <div><label>Data</label><input type="date" id="inDate"></div>
+        <div><label>Descrição</label><input id="inDesc" placeholder="ex.: Salário"></div>
+        <div><label>Valor</label><input id="inVal" type="number" step="0.01" placeholder="0,00"></div>
+        <div><label>Conta</label><select id="inAcc"></select></div>
+        <div><label>Categoria</label><select id="inCat"></select></div>
+        <div><label>Loja</label><input id="inStore" placeholder="opcional"></div>
+        <div class="row align-end"><button class="btn" onclick="addEntrada()">Adicionar</button></div>
       </div>
-      <div class="grid grid-3 mt8">
-        <div><label>Origem</label><input id="eOrigem" /></div>
-        <div><label>Descrição</label><input id="eDesc" /></div>
-        <div><label>Observações</label><input id="eObs" /></div>
-      </div>
-      <div class="mt12"><button class="btn" onclick="addEntrada()">Adicionar</button></div>
-
-      <h3 class="mt16" style="margin:10px 0;font-size:16px">Entradas</h3>
-      <table id="tblEntradas">
-        <thead><tr><th>Data</th><th>Conta</th><th>Categoria</th><th class="right">Valor</th><th>Origem</th><th>Descrição</th><th></th></tr></thead>
-        <tbody></tbody>
-      </table>
+      <div class="mt12"><table id="tblIn"><thead><tr><th>Data</th><th>Descrição</th><th>Valor</th><th>Conta</th><th>Categoria</th><th>Loja</th><th></th></tr></thead><tbody></tbody></table></div>
     </section>
 
-    <script>
-  const CATEGORIES = [
-    "Moradia",
-    "Contas e serviços",
-    "Amizades e família",
-    "Roupas",
-    "Doações",
-    "Supermercado",
-    "Entretenimento",
-    "Compras",
-    "Serviços profissionais",
-    "Comida e bebida",
-    "Transporte",
-    "Saúde e cuidados pessoais"
-  ];
-
-      
-
-    <!-- SAIDAS -->
+    <!-- SAÍDAS -->
     <section id="saidas" class="tab card" style="display:none">
-      <h3 style="margin:0 0 10px;font-size:16px">Lançar saída</h3>
-      <div class="grid grid-4">
-        <div><label>Data</label><input type="date" id="sData" /></div>
-        <div><label>Conta origem</label><select id="sConta"></select></div>
-        <div><label>Categoria</label><select id="sCategoria"></select></div>
-        <div><label>Subcategoria (opcional)</label><input id="sSub" placeholder="Ex.: Supermercado" /></div>
+      <h3>Saídas</h3>
+      <div class="row wrap">
+        <div><label>Data</label><input type="date" id="outDate"></div>
+        <div><label>Descrição</label><input id="outDesc" placeholder="ex.: Mercado, Aluguel"></div>
+        <div><label>Valor</label><input id="outVal" type="number" step="0.01" placeholder="0,00"></div>
+        <div><label>Conta</label><select id="outAcc"></select></div>
+        <div><label>Categoria</label><select id="outCat"></select></div>
+        <div><label>Loja</label><input id="outStore" placeholder="opcional"></div>
+        <div class="row align-end"><button class="btn" onclick="addSaida()">Adicionar</button></div>
       </div>
-      <div class="grid grid-4 mt8">
-        <div><label>Descrição</label><input id="sDesc" /></div>
-        <div><label>Loja/Fornecedor</label><select id="sLoja"></select></div>
-        <div><label>Forma de pagamento</label><select id="sFPag"></select></div>
-        <div><label>Valor total</label><input id="sValor" type="number" step="0.01" /></div>
-      </div>
-      <div class="grid grid-4 mt8">
-        <div><label>Parcelas (nº)</label><input id="sParcN" type="number" min="1" step="1" value="1" /></div>
-        <div><label>Total de parcelas</label><input id="sParcT" type="number" min="1" step="1" value="1" /></div>
-        <div><label>Centro de custo</label><select id="sCentro"></select></div>
-        <div><label>Observações</label><input id="sObs" /></div>
-      </div>
-      <div class="mt12">
-        <button class="btn" onclick="addSaida()">Adicionar</button>
-        <span class="muted pill">ID será gerado automaticamente</span>
-      </div>
-
-      <h3 class="mt16" style="margin:10px 0;font-size:16px">Saídas</h3>
-      <table id="tblSaidas">
-        <thead><tr><th>Data</th><th>ID</th><th>Conta</th><th>Categoria</th><th>Loja</th><th>FPag</th><th class="right">Valor</th><th>Parcela</th><th>Centro</th><th></th></tr></thead>
-        <tbody></tbody>
-      </table>
+      <div class="mt12"><table id="tblOut"><thead><tr><th>Data</th><th>Descrição</th><th>Valor</th><th>Conta</th><th>Categoria</th><th>Loja</th><th></th></tr></thead><tbody></tbody></table></div>
     </section>
 
     <!-- ITENS -->
     <section id="itens" class="tab card" style="display:none">
-      <h3 style="margin:0 0 10px;font-size:16px">Itens da compra</h3>
-      <div class="grid grid-4">
-        <div><label>ID da compra (da aba Saídas)</label><input id="iID" placeholder="AAAA-MM-DD-LOJA-001" /></div>
-        <div><label>Item</label><input id="iNome" /></div>
-        <div><label>Quantidade</label><input id="iQtd" type="number" step="0.01" value="1" /></div>
-        <div><label>Unidade</label><input id="iUn" placeholder="un, kg, L, pacote..." /></div>
+      <h3>Itens comprados</h3>
+      <div class="row wrap">
+        <div><label>Data</label><input type="date" id="itemDate"></div>
+        <div><label>Descrição</label><input id="itemDesc" placeholder="ex.: Arroz 5kg"></div>
+        <div><label>Quantidade</label><input id="itemQty" type="number" step="1" value="1"></div>
+        <div><label>Preço unitário</label><input id="itemPrice" type="number" step="0.01"></div>
+        <div><label>Categoria</label><select id="itemCat"></select></div>
+        <div><label>Loja</label><input id="itemStore" placeholder="ex.: Mercado X"></div>
+        <div class="row align-end"><button class="btn" onclick="addItem()">Adicionar</button></div>
       </div>
-      <div class="grid grid-3 mt8">
-        <div><label>Preço unitário</label><input id="iPU" type="number" step="0.01" /></div>
-        <div><label>Desconto por item (opcional)</label><input id="iDesc" type="number" step="0.01" value="0" /></div>
-        <div><label>&nbsp;</label><button class="btn" onclick="addItem()">Adicionar</button></div>
-      </div>
-
-      <h3 class="mt16" style="margin:10px 0;font-size:16px">Itens</h3>
-      <table id="tblItens">
-        <thead><tr><th>ID Compra</th><th>Item</th><th class="right">Qtd</th><th>Un</th><th class="right">PU</th><th class="right">Subtotal</th><th></th></tr></thead>
-        <tbody></tbody>
-      </table>
+      <div class="mt12"><table id="tblItems"><thead><tr><th>Data</th><th>Descrição</th><th>Qtd</th><th>Preço</th><th>Total</th><th>Categoria</th><th>Loja</th><th></th></tr></thead><tbody></tbody></table></div>
     </section>
 
-    <!-- TRANSFERENCIAS -->
+    <!-- TRANSFERÊNCIAS -->
     <section id="transferencias" class="tab card" style="display:none">
-      <h3 style="margin:0 0 10px;font-size:16px">Transferências</h3>
-      <div class="grid grid-4">
-        <div><label>Data</label><input type="date" id="tData" /></div>
-        <div><label>Conta origem</label><select id="tOrig"></select></div>
-        <div><label>Conta destino</label><select id="tDest"></select></div>
-        <div><label>Valor</label><input type="number" step="0.01" id="tValor" /></div>
+      <h3>Transferências</h3>
+      <div class="row wrap">
+        <div><label>Data</label><input type="date" id="trDate"></div>
+        <div><label>Descrição</label><input id="trDesc" placeholder="opcional"></div>
+        <div><label>Valor</label><input id="trVal" type="number" step="0.01"></div>
+        <div><label>De</label><select id="trFrom"></select></div>
+        <div><label>Para</label><select id="trTo"></select></div>
+        <div class="row align-end"><button class="btn" onclick="addTransfer()">Transferir</button></div>
       </div>
-      <div class="mt12"><button class="btn" onclick="addTransf()">Adicionar</button></div>
-
-      <h3 class="mt16" style="margin:10px 0;font-size:16px">Registro</h3>
-      <table id="tblTransf">
-        <thead><tr><th>Data</th><th>Origem</th><th>Destino</th><th class="right">Valor</th><th></th></tr></thead>
-        <tbody></tbody>
-      </table>
+      <div class="mt12"><table id="tblTr"><thead><tr><th>Data</th><th>Descrição</th><th>Valor</th><th>De</th><th>Para</th><th></th></tr></thead><tbody></tbody></table></div>
     </section>
 
-    <!-- ORCAMENTO -->
+    <!-- ORÇAMENTO -->
     <section id="orcamento" class="tab card" style="display:none">
-      <h3 style="margin:0 0 10px;font-size:16px">Orçamento por categoria (mensal)</h3>
+      <h3>Orçamento mensal por categoria</h3>
       <div class="grid grid-3">
-        <div><label>Mês</label><input type="month" id="oMes" /></div>
-        <div><label>Categoria</label><select id="oCat"></select></div>
-        <div><label>Valor orçado</label><input id="oVal" type="number" step="0.01" /></div>
+        <div>
+          <label>Categoria</label>
+          <select id="budCat"></select>
+        </div>
+        <div>
+          <label>Valor mensal</label>
+          <input id="budVal" type="number" step="0.01">
+        </div>
+        <div class="row align-end">
+          <button class="btn" onclick="addBudget()">Adicionar</button>
+        </div>
       </div>
-      <div class="mt12"><button class="btn" onclick="addOrcamento()">Adicionar/Atualizar</button></div>
-
-      <h3 class="mt16" style="margin:10px 0;font-size:16px">Orçamentos</h3>
-      <table id="tblOrc">
-        <thead><tr><th>Mês</th><th>Categoria</th><th class="right">Orçado</th><th class="right">Realizado</th><th class="right">Diferença</th><th></th></tr></thead>
-        <tbody></tbody>
-      </table>
+      <div class="mt12">
+        <table id="tblBudget"><thead><tr><th>Categoria</th><th>Valor</th><th></th></tr></thead><tbody></tbody></table>
+      </div>
     </section>
 
-    <!-- IMPORTACAO -->
+    <!-- IMPORTAÇÃO -->
     <section id="importacao" class="tab card" style="display:none">
-      <h3 style="margin:0 0 10px;font-size:16px">Importação de Extratos (CSV/OFX)</h3>
-
+      <h3>Importação de Extratos (CSV/OFX)</h3>
       <div class="grid grid-4">
         <div>
-          <label>Conta (aplicada aos lançamentos importados)</label>
+          <label>Conta</label>
           <select id="impConta"></select>
         </div>
         <div>
@@ -389,737 +284,772 @@ Posto Z</textarea>
         <button class="btn" onclick="handleImport()">Processar arquivo</button>
       </div>
 
-      <div class="card mt12" id="impMap" style="display:none">
-        <div class="row"><span class="pill">Mapeamento de colunas (CSV)</span></div>
-        <div class="grid grid-4 mt12">
-          <div><label>Data</label><select id="mapData"></select></div>
-          <div><label>Descrição</label><select id="mapDesc"></select></div>
-          <div><label>Valor</label><select id="mapVal"></select></div>
-          <div><label>Tipo (C/D)</label><select id="mapTipo"></select></div>
+      <h4 class="mt16">Mapeamento de colunas (CSV)</h4>
+      <div class="grid grid-4">
+        <div>
+          <label>Data</label>
+          <select id="mapDate"></select>
         </div>
-        <div class="mt12">
-          <label><input type="checkbox" id="mapHeader" checked /> Primeira linha é cabeçalho</label>
+        <div>
+          <label>Descrição</label>
+          <select id="mapDesc"></select>
         </div>
-        <div class="mt12"><button class="btn" onclick="applyCSVMapping()">Aplicar mapeamento</button></div>
-      </div>
-
-      <div class="card mt12" id="impPreview" style="display:none">
-        <div class="row"><span class="pill">Pré-visualização</span></div>
-        <table id="tblImpPrev">
-          <thead><tr><th>Data</th><th>Conta</th><th>Descrição</th><th>Categoria sugerida</th><th class="right">Valor</th></tr></thead>
-          <tbody></tbody>
-        </table>
-        <div class="mt12">
-          <button class="btn" onclick="confirmImport()">Importar lançamentos</button>
-          <button class="btn ghost" onclick="cancelImport()">Cancelar</button>
+        <div>
+          <label>Valor</label>
+          <select id="mapVal"></select>
+        </div>
+        <div>
+          <label>Tipo (C/D)</label>
+          <select id="mapType"><option value="">—</option></select>
         </div>
       </div>
+      <div class="row mt12">
+        <button class="btn alt" onclick="applyMapping()">Aplicar mapeamento</button>
+      </div>
 
-      <div class="card mt12">
-        <h4 style="margin:0 0 8px;font-size:14px">Regras de categorização</h4>
-        <p class="muted">Crie palavras-chave para categorizar automaticamente as despesas/receitas.</p>
-        <div class="grid grid-3">
-          <div><label>Palavra-chave (na descrição)</label><input id="rcKey" placeholder="ex.: UBER" /></div>
-          <div><label>Categoria</label><select id="rcCat"></select></div>
-          <div><label>Loja/Fornecedor (opcional)</label><input id="rcLoja" placeholder="ex.: Uber" /></div>
+      <h4 class="mt16">Pré-visualização</h4>
+      <div class="preview" id="previewBox"></div>
+      <div class="row mt12">
+        <button class="btn" onclick="confirmImport()">Importar lançamentos</button>
+      </div>
+
+      <h4 class="mt16">Regras de categorização</h4>
+      <div class="rules">
+        <div class="grid grid-4">
+          <div>
+            <label>Se descrição contiver</label>
+            <input id="ruleText" placeholder="ex.: UBER, IFood, Netflix" />
+          </div>
+          <div>
+            <label>Categoria</label>
+            <select id="ruleCategory"></select>
+          </div>
+          <div>
+            <label>Loja (opcional)</label>
+            <input id="ruleStore" placeholder="ex.: Uber, IFood, Netflix" />
+          </div>
+          <div class="row align-end">
+            <button class="btn" onclick="addRule()">Adicionar regra</button>
+          </div>
         </div>
-        <div class="mt12"><button class="btn" onclick="addRegra()">Adicionar regra</button></div>
-        <table class="mt12" id="tblRegras">
-          <thead><tr><th>Palavra</th><th>Categoria</th><th>Loja</th><th></th></tr></thead>
-          <tbody></tbody>
-        </table>
+        <div id="rulesList" class="mt8"></div>
       </div>
     </section>
 
-    <!-- DADOS -->
-    <section id="dados" class="tab card" style="display:none">
-      <h3 style="margin:0 0 10px;font-size:16px">Dados</h3>
-      <div class="row">
-        <button class="btn secondary" onclick="downloadJSON()">Exportar JSON</button>
-        <label class="pill">Importar JSON
-          <input type="file" id="importFile" accept=".json" style="display:none" onchange="importJSON(event)" />
-        </label>
-        <button class="btn ghost" onclick="resetAll()">Resetar tudo</button>
+    <!-- CONFIGURAÇÕES -->
+    <section id="config" class="tab card" style="display:none">
+      <h3>Configurações</h3>
+      <div class="grid grid-3">
+        <div>
+          <label>Contas</label>
+          <textarea id="cfgAccounts" placeholder="Uma por linha, ex.: Nubank; Banco Inter; Mercado Pago"></textarea>
+        </div>
+        <div>
+          <label>Lojas favoritas (sugestões)</label>
+          <textarea id="cfgStores" placeholder="Ex.: Mercado X; Uber; iFood"></textarea>
+        </div>
+        <div>
+          <label>Backup/Restore (JSON)</label>
+          <div class="row">
+            <button class="btn" onclick="downloadBackup()">Baixar backup</button>
+            <input type="file" id="restoreFile" accept="application/json" />
+            <button class="btn alt" onclick="restoreBackup()">Restaurar</button>
+          </div>
+        </div>
       </div>
-      <p class="muted mt8">Atenção: os dados ficam salvos no seu navegador (LocalStorage). Exporte periodicamente.</p>
+      <div class="mt12">
+        <button class="btn" onclick="saveConfig()">Salvar configurações</button>
+      </div>
+      <div class="mt12 muted">Os dados ficam no seu navegador (Local Storage). Ative o PWA para usar offline.</div>
     </section>
+
+    <div class="footer">PWA habilitado. Para instalar no celular, use “Adicionar à tela inicial”.</div>
   </main>
 
   <script>
-    // PWA: registra service worker
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => navigator.serviceWorker.register('sw.js'));
-    }
+    // ==========================
+    // Categorias oficiais + aliases
+    // ==========================
+    const CATEGORIES = [
+      "Moradia",
+      "Contas e serviços",
+      "Amizades e família",
+      "Roupas",
+      "Doações",
+      "Supermercado",
+      "Entretenimento",
+      "Compras",
+      "Serviços profissionais",
+      "Comida e bebida",
+      "Transporte",
+      "Saúde e cuidados pessoais"
+    ];
 
-    // ========= Estado e persistência =========
-    const SKEY = 'cgastos.v2';
-    const state = load() || {
-      params: {
-        moeda: 'R$', formato: 'pt-BR',
-        categorias: ['Moradia','Alimentação','Transporte','Lazer','Saúde','Educação','Impostos','Investimentos','Outros'],
-        pagamentos: ['Cartão Crédito','Cartão Débito','Pix','Dinheiro','Boleto'],
-        contas: ['Banco Inter','Nubank','Mercado Pago'],
-        centros: ['Pessoal','Família','Empresa'],
-        lojas: ['Mercado X','Farmácia Y','Posto Z'],
-        saldoInicial: {}
-      },
-      entradas: [],
-      saidas: [],
-      itens: [],
-      transferencias: [],
-      orcamentos: [],
-      regras: [] // {key, cat, loja}
+    const CATEGORY_ALIASES = {
+      "Moradia": ["Aluguel", "Condomínio", "IPTU", "Habitação", "Aluguel/Moradia"],
+      "Contas e serviços": ["Contas", "Utilidades", "Luz", "Água", "Gás", "Internet", "Telefonia", "Energia"],
+      "Amizades e família": ["Família", "Presentes", "Crianças", "Pais", "Amigos", "Parentes"],
+      "Roupas": ["Vestuário", "Moda", "Calçados"],
+      "Doações": ["Caridade", "ONG", "Contribuições"],
+      "Supermercado": ["Mercado", "Hipermercado", "Atacado"],
+      "Entretenimento": ["Lazer", "Streaming", "Cinema", "Shows", "Games"],
+      "Compras": ["E-commerce", "Lojas", "Eletrônicos", "Casa e Decoração", "Casa & Decoração"],
+      "Serviços profissionais": ["Contabilidade", "Jurídico", "Consultoria", "Freelancer"],
+      "Comida e bebida": ["Restaurantes", "Lanches", "Bar", "Delivery", "iFood", "Rappi", "Uber Eats"],
+      "Transporte": ["Uber", "99", "Combustível", "Estacionamento", "Pedágio", "Transporte público", "Bilhete Único", "Metro"],
+      "Saúde e cuidados pessoais": ["Farmácia", "Plano de Saúde", "Exames", "Academia", "Barbearia", "Salão"]
     };
 
-    function save(){ localStorage.setItem(SKEY, JSON.stringify(state)); }
-    function load(){ try{ return JSON.parse(localStorage.getItem(SKEY)); } catch(e){ return null; } }
-    function resetAll(){
-      if(confirm('Apagar todos os dados?')){ localStorage.removeItem(SKEY); location.reload(); }
+    const CATEGORY_ALIAS_INDEX = (() => {
+      const idx = {};
+      for (const [target, list] of Object.entries(CATEGORY_ALIASES)) {
+        for (const alias of list) idx[alias.toLowerCase()] = target;
+      }
+      for (const c of CATEGORIES) idx[c.toLowerCase()] = c;
+      return idx;
+    })();
+
+    function normalizeCategory(name) {
+      if (!name) return "";
+      const clean = String(name).trim().toLowerCase();
+      return CATEGORY_ALIAS_INDEX[clean] || "";
     }
 
-    // ========= Utilidades =========
-    const fmtMoeda = (n)=> (state.params.moeda || 'R$') + ' ' + (Number(n)||0).toLocaleString(state.params.formato||'pt-BR',{minimumFractionDigits:2, maximumFractionDigits:2});
-    const ymd = (d)=> d ? new Date(d).toISOString().slice(0,10) : '';
-    const ym = (d)=> d ? ymd(d).slice(0,7) : '';
-    const todayYM = ()=> new Date().toISOString().slice(0,7);
-    const slug = s => (s||'').toString().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-zA-Z0-9]+/g,'-').replace(/(^-|-$)/g,'').toUpperCase();
-    const toBRDate = d => new Date(d).toLocaleDateString(state.params.formato);
+    // ==========================
+    // Storage helpers
+    // ==========================
+    const LS_KEYS = {
+      entradas: 'cg_entradas',
+      saidas: 'cg_saidas',
+      itens: 'cg_itens',
+      contas: 'cg_contas',
+      regras: 'cg_regras',
+      orc: 'cg_orc',
+      stores: 'cg_lojas'
+    };
+    const money = (n) => (n||0).toLocaleString('pt-BR', {style:'currency', currency:'BRL'});
+    const parseNum = (v) => {
+      if (typeof v === 'number') return v;
+      if (!v) return 0;
+      let s = String(v).replace(/\s+/g,'').replace(/\./g,'').replace(',','.');
+      return parseFloat(s) || 0;
+    };
+    const fmtDate = (d) => {
+      // aceita Date, 'yyyy-mm-dd' ou 'dd/mm/yyyy'
+      if (!d) return '';
+      if (d instanceof Date) return d.toISOString().slice(0,10);
+      const s = String(d);
+      if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+      const m = s.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+      if (m) return `${m[3]}-${m[2]}-${m[1]}`;
+      return s;
+    };
 
-    function uniqueIDSaida(s){
-      const dt = ymd(s.data);
-      const loja = slug(s.loja||'LOJA');
-      const seq = String((state.saidas.filter(x=>ymd(x.data)===dt).length+1)).padStart(3,'0');
-      return `${dt}-${loja}-${seq}`;
+    function load(key, def){ try { return JSON.parse(localStorage.getItem(key) || JSON.stringify(def)); } catch { return def; } }
+    function save(key, val){ localStorage.setItem(key, JSON.stringify(val)); }
+
+    function loadEntradas(){ return load(LS_KEYS.entradas, []); }
+    function saveEntradas(v){ save(LS_KEYS.entradas, v); }
+    function loadSaidas(){ return load(LS_KEYS.saidas, []); }
+    function saveSaidas(v){ save(LS_KEYS.saidas, v); }
+    function loadItens(){ return load(LS_KEYS.itens, []); }
+    function saveItens(v){ save(LS_KEYS.itens, v); }
+    function loadContas(){ return load(LS_KEYS.contas, ["Nubank", "Banco Inter", "Mercado Pago"]); }
+    function saveContas(v){ save(LS_KEYS.contas, v); }
+    function loadRules(){ return load(LS_KEYS.regras, []); }
+    function saveRules(v){ save(LS_KEYS.regras, v); }
+    function loadOrc(){ return load(LS_KEYS.orc, []); }
+    function saveOrc(v){ save(LS_KEYS.orc, v); }
+    function loadStores(){ return load(LS_KEYS.stores, ["Uber","iFood","Mercado X"]); }
+    function saveStores(v){ save(LS_KEYS.stores, v); }
+
+    // Deduplicação por hash: data|valor|descrição
+    function txHash(tx){
+      return `${fmtDate(tx.data)}|${(+parseNum(tx.valor)).toFixed(2)}|${(tx.descricao||'').trim().toLowerCase()}`;
     }
-    function monthFilter(arr, mes){ return mes ? arr.filter(x=> ym(x.data) === mes) : arr; }
-    function sum(arr, f){ return arr.reduce((a,b)=> a + f(b), 0); }
-    function opts(list){ return (list||[]).map(v=>`<option>${escapeHtml(v)}</option>`).join(''); }
-    function escapeHtml(s){ return (s||'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;'); }
 
-    // ========= Tabs =========
-    document.querySelectorAll('.tab-btn').forEach(b=>{
-      b.addEventListener('click', ()=>{
-        document.querySelectorAll('.tab-btn').forEach(x=>x.classList.remove('active'));
-        b.classList.add('active');
-        const t = b.dataset.tab;
-        document.querySelectorAll('.tab').forEach(x=> x.style.display = 'none');
-        document.getElementById(t).style.display = '';
-        if(t==='parametros') fillParamInputs();
-        if(['entradas','saidas','itens','transferencias','orcamento','importacao'].includes(t)) fillSelects();
-        render();
+    // ==========================
+    // Inicialização
+    // ==========================
+    document.addEventListener('DOMContentLoaded', () => {
+      // Tabs
+      document.querySelectorAll('.tab-btn').forEach(btn=>{
+        btn.addEventListener('click', () => switchTab(btn.dataset.tab));
       });
+
+      // Preenche selects
+      fillSelects();
+
+      // Dashboard mês atual
+      const m = new Date(); document.getElementById('dashMonth').value = `${m.getFullYear()}-${String(m.getMonth()+1).padStart(2,'0')}`;
+      refreshDashboard();
+
+      // PWA: registrar service worker
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('sw.js').catch(()=>{});
+      }
+
+      // Importação: preencher select de categorias nas Regras
+      const selRule = document.getElementById('ruleCategory');
+      if (selRule) {
+        selRule.innerHTML = '<option value="">Selecione…</option>' + CATEGORIES.map(c => `<option value="${c}">${c}</option>`).join('');
+      }
     });
 
-    // ========= Parâmetros =========
-    function fillParamInputs(){
-      pMoeda.value = state.params.moeda;
-      pFormatoData.value = state.params.formato;
-      pCategorias.value = state.params.categorias.join('\n');
-      pPagamentos.value = state.params.pagamentos.join('\n');
-      pContas.value = state.params.contas.join('\n');
-      pCentros.value = state.params.centros.join('\n');
-      pLojas.value = state.params.lojas.join('\n');
-      pSaldoInicial.value = JSON.stringify(state.params.saldoInicial||{});
-    }
-    function splitLines(t){ return (t||'').split(/\r?\n/).map(s=>s.trim()).filter(Boolean); }
-    function saveParams(){
-      state.params.moeda = pMoeda.value || 'R$';
-      state.params.formato = pFormatoData.value || 'pt-BR';
-      state.params.categorias = splitLines(pCategorias.value);
-      state.params.pagamentos = splitLines(pPagamentos.value);
-      state.params.contas = splitLines(pContas.value);
-      state.params.centros = splitLines(pCentros.value);
-      state.params.lojas = splitLines(pLojas.value);
-      try { state.params.saldoInicial = JSON.parse(pSaldoInicial.value||'{}'); } catch(e){ alert('JSON inválido em Saldo inicial'); }
-      save(); fillSelects(); render();
-      alert('Parâmetros salvos.');
+    function switchTab(t){
+      document.querySelectorAll('.tab').forEach(x=>x.style.display='none');
+      document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+      const el = document.getElementById(t);
+      if (el) el.style.display = t === 'dashboard' ? '' : 'block';
+      document.querySelector(`.tab-btn[data-tab="${t}"]`)?.classList.add('active');
+      if (['entradas','saidas','itens','transferencias','orcamento','importacao','config','dashboard'].includes(t)) fillSelects();
+      if (t === 'dashboard') refreshDashboard();
+      if (t === 'importacao') { renderRules(); }
+      if (t === 'orcamento') { renderBudget(); }
+      if (t === 'entradas') { renderEntradas(); }
+      if (t === 'saidas') { renderSaidas(); }
+      if (t === 'itens') { renderItens(); }
+      if (t === 'transferencias') { renderTransfers(); }
     }
 
     function fillSelects(){
-      eConta.innerHTML = opts(state.params.contas);
-      sConta.innerHTML = opts(state.params.contas);
-      sCategoria.innerHTML = opts(state.params.categorias);
-      sLoja.innerHTML = opts(state.params.lojas);
-      sFPag.innerHTML = opts(state.params.pagamentos);
-      sCentro.innerHTML = opts(state.params.centros);
-      tOrig.innerHTML = opts(state.params.contas);
-      tDest.innerHTML = opts(state.params.contas);
-      oCat.innerHTML = opts(state.params.categorias);
-
-      if (window.impConta) impConta.innerHTML = opts(state.params.contas);
-      if (window.rcCat) rcCat.innerHTML = opts(state.params.categorias);
-      renderRegras();
+      const contas = loadContas();
+      const cats = CATEGORIES;
+      // Dashboard
+      fillOptions('dashAccount', ['Todas', ...contas]);
+      // Entradas
+      fillOptions('inAcc', contas); fillOptions('inCat', cats);
+      // Saídas
+      fillOptions('outAcc', contas); fillOptions('outCat', cats);
+      // Itens
+      fillOptions('itemCat', cats);
+      // Transferências
+      fillOptions('trFrom', contas); fillOptions('trTo', contas);
+      // Importação
+      fillOptions('impConta', contas);
+      // Orçamento
+      fillOptions('budCat', cats);
     }
 
-    // ========= Entradas =========
+    function fillOptions(id, list){
+      const el = document.getElementById(id); if (!el) return;
+      el.innerHTML = (list||[]).map(v => `<option value="${v}">${v}</option>`).join('');
+    }
+
+    // ==========================
+    // Dashboard e relatórios
+    // ==========================
+    function refreshDashboard(){
+      const month = document.getElementById('dashMonth').value || '';
+      const acc = document.getElementById('dashAccount').value || 'Todas';
+      const [y,m] = month.split('-').map(x=>parseInt(x||'0',10));
+
+      const ins = loadEntradas().filter(x => matchYM(x.data, y, m) && matchAcc(x.conta, acc));
+      const outs = loadSaidas().filter(x => matchYM(x.data, y, m) && matchAcc(x.conta, acc));
+      const items = loadItens().filter(x => matchYM(x.data, y, m));
+
+      const sumIn = ins.reduce((s,x)=>s+parseNum(x.valor),0);
+      const sumOut = outs.reduce((s,x)=>s+parseNum(x.valor),0);
+      document.getElementById('kpiIn').textContent = money(sumIn);
+      document.getElementById('kpiOut').textContent = money(sumOut);
+      document.getElementById('kpiBal').textContent = money(sumIn - sumOut);
+      document.getElementById('kpiItems').textContent = items.length;
+
+      // Relatório por categoria (saídas)
+      const perCat = {};
+      for (const s of outs) {
+        const c = s.categoria || 'Sem categoria';
+        perCat[c] = (perCat[c] || 0) + parseNum(s.valor);
+      }
+      const orcs = loadOrc();
+      const html = Object.entries(perCat).sort((a,b)=>b[1]-a[1]).map(([cat, val])=>{
+        const orc = orcs.find(o=>o.categoria===cat);
+        const warn = orc && val > parseNum(orc.valor);
+        return `<div class="row" style="justify-content:space-between;border-bottom:1px solid var(--border);padding:8px 0">
+          <div><span class="tag">${cat}</span></div>
+          <div>${money(val)} ${orc? `<span class="pill ${warn?'bad':'warn'}" style="margin-left:8px;">Orçado: ${money(orc.valor)}</span>`:''}</div>
+        </div>`;
+      }).join('') || '<div class="muted">Sem gastos no período.</div>';
+      document.getElementById('reportCat').innerHTML = html;
+    }
+
+    function matchYM(d, y, m){
+      if (!d || !y || !m) return true;
+      const s = fmtDate(d);
+      return +s.slice(0,4)===y && +s.slice(5,7)===m;
+    }
+    function matchAcc(c, a){ return a==='Todas' || c===a; }
+
+    // ==========================
+    // CRUD Entradas/Saídas/Itens/Transferências
+    // ==========================
     function addEntrada(){
-      const r = {
-        id: crypto.randomUUID(),
-        data: eData.value,
-        conta: eConta.value,
-        categoria: eCategoria.value,
-        valor: parseFloat(eValor.value||'0'),
-        origem: eOrigem.value,
-        desc: eDesc.value,
-        obs: eObs.value
+      const tx = {
+        data: fmtDate(document.getElementById('inDate').value),
+        descricao: document.getElementById('inDesc').value.trim(),
+        valor: parseNum(document.getElementById('inVal').value),
+        conta: document.getElementById('inAcc').value,
+        categoria: normalizeCategory(document.getElementById('inCat').value),
+        loja: document.getElementById('inStore').value.trim()
       };
-      if(!r.data || !r.conta || !r.valor){ return alert('Preencha Data, Conta e Valor.'); }
-      if(r.valor <= 0){ return alert('Valor deve ser positivo.'); }
-      state.entradas.push(r); save(); clearEntrada(); render();
+      if (!tx.data || !tx.descricao || !tx.valor) return alert('Preencha data, descrição e valor');
+      const arr = loadEntradas();
+      arr.push(tx); saveEntradas(arr); renderEntradas(); refreshDashboard(); clearEntradaForm();
     }
-    function clearEntrada(){ eData.value=''; eValor.value=''; eOrigem.value=''; eDesc.value=''; eObs.value=''; }
-    function delEntrada(id){ state.entradas = state.entradas.filter(x=>x.id!==id); save(); render(); }
+    function clearEntradaForm(){ ['inDate','inDesc','inVal','inStore'].forEach(id=>document.getElementById(id).value=''); }
 
-    // ========= Saídas =========
+    function renderEntradas(){
+      const tb = document.querySelector('#tblIn tbody'); const arr = loadEntradas();
+      tb.innerHTML = arr.map((x,i)=>`<tr>
+        <td>${fmtDate(x.data)}</td><td>${x.descricao}</td><td>${money(x.valor)}</td>
+        <td>${x.conta||''}</td><td>${x.categoria||''}</td><td>${x.loja||''}</td>
+        <td><button class="btn alt" onclick="delEntrada(${i})">Excluir</button></td>
+      </tr>`).join('');
+    }
+    function delEntrada(i){ const arr = loadEntradas(); arr.splice(i,1); saveEntradas(arr); renderEntradas(); refreshDashboard(); }
+
     function addSaida(){
-      const r = {
-        id: null,
-        data: sData.value,
-        conta: sConta.value,
-        categoria: sCategoria.value,
-        sub: sSub.value,
-        desc: sDesc.value,
-        loja: sLoja.value,
-        fpag: sFPag.value,
-        valor: parseFloat(sValor.value||'0'),
-        parcelaN: parseInt(sParcN.value||'1',10),
-        parcelaT: parseInt(sParcT.value||'1',10),
-        centro: sCentro.value,
-        obs: sObs.value
+      const tx = {
+        data: fmtDate(document.getElementById('outDate').value),
+        descricao: document.getElementById('outDesc').value.trim(),
+        valor: parseNum(document.getElementById('outVal').value),
+        conta: document.getElementById('outAcc').value,
+        categoria: normalizeCategory(document.getElementById('outCat').value),
+        loja: document.getElementById('outStore').value.trim()
       };
-      if(!r.data || !r.conta || !r.valor){ return alert('Preencha Data, Conta e Valor.'); }
-      if(r.valor <= 0){ return alert('Valor deve ser positivo.'); }
-      r.id = uniqueIDSaida(r);
-      state.saidas.push(r); save(); clearSaida(); render();
+      if (!tx.data || !tx.descricao || !tx.valor) return alert('Preencha data, descrição e valor');
+      const arr = loadSaidas();
+      arr.push(tx); saveSaidas(arr); renderSaidas(); refreshDashboard(); clearSaidaForm();
     }
-    function clearSaida(){ sData.value=''; sDesc.value=''; sValor.value=''; sSub.value=''; sObs.value=''; sParcN.value=1; sParcT.value=1; }
-    function delSaida(id){
-      state.saidas = state.saidas.filter(x=>x.id!==id);
-      state.itens = state.itens.filter(i=>i.sid!==id);
-      save(); render();
-    }
+    function clearSaidaForm(){ ['outDate','outDesc','outVal','outStore'].forEach(id=>document.getElementById(id).value=''); }
 
-    // ========= Itens =========
+    function renderSaidas(){
+      const tb = document.querySelector('#tblOut tbody'); const arr = loadSaidas();
+      tb.innerHTML = arr.map((x,i)=>`<tr>
+        <td>${fmtDate(x.data)}</td><td>${x.descricao}</td><td>${money(x.valor)}</td>
+        <td>${x.conta||''}</td><td>${x.categoria||''}</td><td>${x.loja||''}</td>
+        <td><button class="btn alt" onclick="delSaida(${i})">Excluir</button></td>
+      </tr>`).join('');
+    }
+    function delSaida(i){ const arr = loadSaidas(); arr.splice(i,1); saveSaidas(arr); renderSaidas(); refreshDashboard(); }
+
     function addItem(){
-      const r = {
-        id: crypto.randomUUID(),
-        sid: iID.value.trim(),
-        nome: iNome.value,
-        qtd: parseFloat(iQtd.value||'0'),
-        un: iUn.value,
-        pu: parseFloat(iPU.value||'0'),
-        desc: parseFloat(iDesc.value||'0')
+      const it = {
+        data: fmtDate(document.getElementById('itemDate').value),
+        descricao: document.getElementById('itemDesc').value.trim(),
+        qtd: parseInt(document.getElementById('itemQty').value||'1',10),
+        preco: parseNum(document.getElementById('itemPrice').value),
+        categoria: normalizeCategory(document.getElementById('itemCat').value),
+        loja: document.getElementById('itemStore').value.trim()
       };
-      if(!r.sid || !r.nome || r.qtd<=0 || r.pu<=0){ return alert('Preencha ID, Item, Qtd>0 e PU>0.'); }
-      if(!state.saidas.some(s=>s.id===r.sid)){ if(!confirm('ID não encontrado em Saídas. Adicionar mesmo assim?')) return; }
-      state.itens.push(r); save(); clearItem(); render();
+      if (!it.data || !it.descricao || !it.preco) return alert('Preencha data, descrição e preço');
+      const arr = loadItens(); arr.push(it); saveItens(arr); renderItens(); refreshDashboard(); clearItemForm();
     }
-    function clearItem(){ iID.value=''; iNome.value=''; iQtd.value=1; iUn.value=''; iPU.value=''; iDesc.value=0; }
-    function delItem(id){ state.itens = state.itens.filter(x=>x.id!==id); save(); render(); }
-
-    // ========= Transferências =========
-    function addTransf(){
-      const r = { id: crypto.randomUUID(), data: tData.value, origem: tOrig.value, destino: tDest.value, valor: parseFloat(tValor.value||'0') };
-      if(!r.data || !r.origem || !r.destino || !r.valor){ return alert('Preencha Data, Origem, Destino e Valor.'); }
-      if(r.origem === r.destino){ return alert('Origem e destino não podem ser iguais.'); }
-      if(r.valor <= 0){ return alert('Valor deve ser positivo.'); }
-      state.transferencias.push(r); save(); tData.value=''; tValor.value=''; render();
-    }
-    function delTransf(id){ state.transferencias = state.transferencias.filter(x=>x.id!==id); save(); render(); }
-
-    // ========= Orçamento =========
-    function addOrcamento(){
-      const r = { mes: oMes.value, cat: oCat.value, val: parseFloat(oVal.value||'0') };
-      if(!r.mes || !r.cat || r.val<=0){ return alert('Preencha Mês, Categoria e Valor>0.'); }
-      const idx = state.orcamentos.findIndex(x=>x.mes===r.mes && x.cat===r.cat);
-      if(idx>=0) state.orcamentos[idx]=r; else state.orcamentos.push(r);
-      save(); oVal.value=''; render();
-    }
-    function delOrc(mes,cat){
-      state.orcamentos = state.orcamentos.filter(x=> !(x.mes===mes && x.cat===cat) ); save(); render();
-    }
-
-    // ========= Cálculos e render =========
-    function saldoPorConta(){
-      const base = Object.assign({}, state.params.saldoInicial||{});
-      state.entradas.forEach(e=> base[e.conta] = (base[e.conta]||0) + (e.valor||0));
-      state.saidas.forEach(s=> base[s.conta] = (base[s.conta]||0) - (s.valor||0));
-      state.transferencias.forEach(t=>{
-        base[t.origem] = (base[t.origem]||0) - (t.valor||0);
-        base[t.destino] = (base[t.destino]||0) + (t.valor||0);
-      });
-      return base;
-    }
-    function realizadosPorCategoria(mes){
-      const s = monthFilter(state.saidas, mes);
-      const byCat = {};
-      s.forEach(r=> byCat[r.categoria] = (byCat[r.categoria]||0) + (r.valor||0) );
-      return byCat;
-    }
-    function realizadosPorLoja(mes){
-      const s = monthFilter(state.saidas, mes);
-      const by = {};
-      s.forEach(r=> by[r.loja||'—'] = (by[r.loja||'—']||0) + (r.valor||0) );
-      return Object.entries(by).sort((a,b)=> b[1]-a[1]).slice(0,10);
-    }
-
-    function render(){
-      const mes = dashMes.value || todayYM();
-
-      const entMes = sum(monthFilter(state.entradas, mes), x=>x.valor||0);
-      const saiMes = sum(monthFilter(state.saidas, mes), x=>x.valor||0);
-      const comprasMes = monthFilter(state.saidas, mes).length;
-      kpiEntradas.textContent = fmtMoeda(entMes);
-      kpiSaidas.textContent = fmtMoeda(saiMes);
-      kpiSaldo.textContent = fmtMoeda(entMes - saiMes);
-      kpiTicket.textContent = fmtMoeda(comprasMes ? saiMes/comprasMes : 0);
-
-      tblEntradas.querySelector('tbody').innerHTML = state.entradas.map(e=>`
-        <tr>
-          <td>${toBRDate(e.data)}</td>
-          <td>${escapeHtml(e.conta)}</td>
-          <td><span class="tag">${escapeHtml(e.categoria||'—')}</span></td>
-          <td class="right">${fmtMoeda(e.valor)}</td>
-          <td>${escapeHtml(e.origem||'—')}</td>
-          <td>${escapeHtml(e.desc||'')}</td>
-          <td class="right"><button class="btn ghost" onclick="delEntrada('${e.id}')">Excluir</button></td>
-        </tr>`).join('');
-
-      tblSaidas.querySelector('tbody').innerHTML = state.saidas.map(s=>`
-        <tr>
-          <td>${toBRDate(s.data)}</td>
-          <td><span class="pill">${escapeHtml(s.id)}</span></td>
-          <td>${escapeHtml(s.conta)}</td>
-          <td><span class="tag">${escapeHtml(s.categoria)}</span></td>
-          <td>${escapeHtml(s.loja||'—')}</td>
-          <td>${escapeHtml(s.fpag||'—')}</td>
-          <td class="right ${s.valor>0?'':'neg'}">${fmtMoeda(s.valor)}</td>
-          <td>${s.parcelaN||1}/${s.parcelaT||1}</td>
-          <td>${escapeHtml(s.centro||'—')}</td>
-          <td class="right"><button class="btn ghost" onclick="delSaida('${s.id}')">Excluir</button></td>
-        </tr>`).join('');
-
-      tblItens.querySelector('tbody').innerHTML = state.itens.map(i=>{
-        const subtotal = (i.qtd||0)*(i.pu||0) - (i.desc||0);
+    function clearItemForm(){ ['itemDate','itemDesc','itemQty','itemPrice','itemStore'].forEach(id=>document.getElementById(id).value=''); }
+    function renderItens(){
+      const tb = document.querySelector('#tblItems tbody'); const arr = loadItens();
+      tb.innerHTML = arr.map((x,i)=> {
+        const total = (x.qtd||0) * parseNum(x.preco||0);
         return `<tr>
-          <td><span class="pill">${escapeHtml(i.sid)}</span></td>
-          <td>${escapeHtml(i.nome)}</td>
-          <td class="right">${(i.qtd||0).toLocaleString(state.params.formato)}</td>
-          <td>${escapeHtml(i.un||'')}</td>
-          <td class="right">${fmtMoeda(i.pu||0)}</td>
-          <td class="right">${fmtMoeda(subtotal)}</td>
-          <td class="right"><button class="btn ghost" onclick="delItem('${i.id}')">Excluir</button></td>
+          <td>${fmtDate(x.data)}</td><td>${x.descricao}</td><td>${x.qtd||1}</td>
+          <td>${money(x.preco)}</td><td>${money(total)}</td>
+          <td>${x.categoria||''}</td><td>${x.loja||''}</td>
+          <td><button class="btn alt" onclick="delItem(${i})">Excluir</button></td>
         </tr>`;
       }).join('');
+    }
+    function delItem(i){ const arr = loadItens(); arr.splice(i,1); saveItens(arr); renderItens(); refreshDashboard(); }
 
-      tblTransf.querySelector('tbody').innerHTML = state.transferencias.map(t=>`
-        <tr>
-          <td>${toBRDate(t.data)}</td>
-          <td>${escapeHtml(t.origem)}</td>
-          <td>${escapeHtml(t.destino)}</td>
-          <td class="right">${fmtMoeda(t.valor)}</td>
-          <td class="right"><button class="btn ghost" onclick="delTransf('${t.id}')">Excluir</button></td>
-        </tr>`).join('');
-
-      const realByMesCat = {};
-      state.saidas.forEach(s=>{
-        const k = ym(s.data)+'|'+(s.categoria||'');
-        realByMesCat[k] = (realByMesCat[k]||0) + (s.valor||0);
-      });
-      tblOrc.querySelector('tbody').innerHTML = state.orcamentos.map(o=>{
-        const real = realByMesCat[o.mes+'|'+o.cat]||0;
-        const dif = (o.val||0) - real;
-        const cls = dif>=0 ? 'ok' : 'neg';
-        return `<tr>
-          <td>${o.mes}</td>
-          <td>${escapeHtml(o.cat)}</td>
-          <td class="right">${fmtMoeda(o.val||0)}</td>
-          <td class="right">${fmtMoeda(real)}</td>
-          <td class="right ${cls}">${fmtMoeda(dif)}</td>
-          <td class="right"><button class="btn ghost" onclick="delOrc('${o.mes}','${o.cat.replaceAll("'","\\'")}')">Excluir</button></td>
-        </tr>`;
-      }).join('');
-
-      const byCat = realizadosPorCategoria(mes);
-      const rowsCat = Object.entries(byCat).sort((a,b)=> b[1]-a[1]);
-      tblCats.querySelector('tbody').innerHTML = rowsCat.map(([cat, val])=>`
-        <tr><td>${escapeHtml(cat)}</td><td class="right">${fmtMoeda(val)}</td></tr>`).join('');
-      const tot = rowsCat.reduce((a,[,v])=>a+v,0);
-      totCat.textContent = fmtMoeda(tot);
-
-      const rowsLojas = realizadosPorLoja(mes);
-      tblLojas.querySelector('tbody').innerHTML = rowsLojas.map(([loja, val])=>`
-        <tr><td>${escapeHtml(loja)}</td><td class="right">${fmtMoeda(val)}</td></tr>`).join('');
+    function addTransfer(){
+      const tx = {
+        data: fmtDate(document.getElementById('trDate').value),
+        descricao: document.getElementById('trDesc').value.trim(),
+        valor: parseNum(document.getElementById('trVal').value),
+        from: document.getElementById('trFrom').value,
+        to: document.getElementById('trTo').value
+      };
+      if (!tx.data || !tx.valor || !tx.from || !tx.to) return alert('Preencha data, valor, de e para');
+      const ins = loadEntradas(); const outs = loadSaidas();
+      outs.push({ data: tx.data, descricao: tx.descricao || `Transf p/ ${tx.to}`, valor: tx.valor, conta: tx.from, categoria: "Transferência", loja: ""});
+      ins.push({ data: tx.data, descricao: tx.descricao || `Transf de ${tx.from}`, valor: tx.valor, conta: tx.to, categoria: "Transferência", loja: ""});
+      saveSaidas(outs); saveEntradas(ins); renderTransfers(); refreshDashboard();
+      ['trDate','trDesc','trVal'].forEach(id=>document.getElementById(id).value='');
+    }
+    function renderTransfers(){
+      const tb = document.querySelector('#tblTr tbody'); const ins = loadEntradas(); const outs = loadSaidas();
+      // monta pares simples por descrição
+      const trs = [];
+      for (const o of outs.filter(x=>x.categoria==='Transferência')){
+        const i = ins.find(x=>x.categoria==='Transferência' && fmtDate(x.data)===fmtDate(o.data) && parseNum(x.valor)===parseNum(o.valor));
+        trs.push({data:o.data, descricao:o.descricao, valor:o.valor, from:o.conta, to:i?.conta||''});
+      }
+      tb.innerHTML = trs.map((t,idx)=>`<tr>
+        <td>${fmtDate(t.data)}</td><td>${t.descricao||''}</td><td>${money(t.valor)}</td><td>${t.from}</td><td>${t.to}</td>
+        <td><button class="btn alt" onclick="delTransfer(${idx})">Excluir</button></td>
+      </tr>`).join('');
+    }
+    function delTransfer(i){
+      // remoção simplificada: não implementamos ligação direta; o usuário pode remover manualmente nas abas
+      alert('Para remover uma transferência, exclua as linhas correspondentes em Entradas e Saídas.');
     }
 
-    // ========= Importação =========
-    let importBuffer = [];
-    state.regras = state.regras || [];
+    // ==========================
+    // Orçamento
+    // ==========================
+    function addBudget(){
+      const cat = normalizeCategory(document.getElementById('budCat').value);
+      const val = parseNum(document.getElementById('budVal').value);
+      if (!cat || !val) return alert('Selecione categoria e valor.');
+      const arr = loadOrc();
+      const idx = arr.findIndex(x=>x.categoria===cat);
+      if (idx>=0) arr[idx].valor = val; else arr.push({categoria:cat, valor:val});
+      saveOrc(arr); renderBudget();
+      document.getElementById('budVal').value = '';
+    }
+    function renderBudget(){
+      const arr = loadOrc();
+      const tb = document.querySelector('#tblBudget tbody');
+      tb.innerHTML = arr.map((x,i)=>`<tr><td>${x.categoria}</td><td>${money(x.valor)}</td><td><button class="btn alt" onclick="delBudget(${i})">Excluir</button></td></tr>`).join('');
+    }
+    function delBudget(i){ const arr = loadOrc(); arr.splice(i,1); saveOrc(arr); renderBudget(); }
 
-    async function handleImport(){
-      const f = impFile.files?.[0];
-      if(!f){ return alert('Selecione um arquivo .csv ou .ofx'); }
-      const ext = f.name.split('.').pop().toLowerCase();
-      if(ext === 'ofx'){
-        parseOFX(await f.text());
+    // ==========================
+    // Importação (CSV/OFX) + Regras
+    // ==========================
+    let parsedRows = []; // linhas brutas após parse
+    let csvHeaders = []; // cabeçalhos do CSV
+    let mapped = [];     // linhas mapeadas p/ formato interno
+
+    function handleImport(){
+      const file = document.getElementById('impFile').files[0];
+      if (!file) return alert('Selecione um arquivo');
+      const name = file.name.toLowerCase();
+      if (name.endsWith('.ofx')) {
+        parseOFX(file);
       } else {
-        parseCSVFile(f);
+        parseCSVFile(file);
       }
     }
 
-    async function parseCSVFile(file){
-      const sepSel = impSep.value;
+    function parseCSVFile(file){
+      const enc = document.getElementById('impEnc').value || 'UTF-8';
+      const sepSel = document.getElementById('impSep').value;
       const sep = sepSel === 'tab' ? '\t' : sepSel;
-      const text = await file.text();
-      const lines = text.replace(/\r\n/g, '\n').split('\n').filter(l => l.trim().length>0);
-      const first = lines[0];
 
-      const CATEGORY_ALIASES = {
-    "Moradia": ["Aluguel", "Condomínio", "IPTU", "Habitação", "Aluguel/Moradia"],
-    "Contas e serviços": ["Contas", "Utilidades", "Luz", "Água", "Gás", "Internet", "Telefonia", "Energia"],
-    "Amizades e família": ["Família", "Presentes", "Crianças", "Pais", "Amigos", "Parentes"],
-    "Roupas": ["Vestuário", "Moda", "Calçados"],
-    "Doações": ["Caridade", "ONG", "Contribuições"],
-    "Supermercado": ["Mercado", "Hipermercado", "Atacado"],
-    "Entretenimento": ["Lazer", "Streaming", "Cinema", "Shows", "Games"],
-    "Compras": ["E-commerce", "Lojas", "Eletrônicos", "Casa e Decoração", "Casa & Decoração"],
-    "Serviços profissionais": ["Contabilidade", "Jurídico", "Consultoria", "Freelancer"],
-    "Comida e bebida": ["Restaurantes", "Lanches", "Bar", "Delivery", "iFood", "Rappi", "Uber Eats"],
-    "Transporte": ["Uber", "99", "Combustível", "Estacionamento", "Pedágio", "Transporte público", "Bilhete Único", "Metro"],
-    "Saúde e cuidados pessoais": ["Farmácia", "Plano de Saúde", "Exames", "Academia", "Barbearia", "Salão"]
-  };
-
-  // Cria um índice alias->categoria alvo
-  const CATEGORY_ALIAS_INDEX = (() => {
-    const idx = {};
-    for (const [target, list] of Object.entries(CATEGORY_ALIASES)) {
-      for (const alias of list) {
-        idx[alias.toLowerCase()] = target;
-      }
+      const fr = new FileReader();
+      fr.onload = () => {
+        let text = fr.result;
+        if (typeof text !== 'string') text = new TextDecoder(enc).decode(text);
+        const lines = text.replace(/\r/g,'').split('\n').filter(l=>l.trim().length>0);
+        csvHeaders = splitCSV(lines[0], sep);
+        parsedRows = lines.slice(1).map(l => splitCSV(l, sep));
+        suggestMappingByOrigin(csvHeaders);
+        buildPreview();
+      };
+      if (enc === 'UTF-8') fr.readAsText(file);
+      else fr.readAsArrayBuffer(file);
     }
-    // também mapeia o próprio nome (caso venha com variações de acento/maiúsculas)
-    for (const c of CATEGORIES) idx[c.toLowerCase()] = c;
-    return idx;
-  })();
 
-  function normalizeCategory(name) {
-    if (!name) return "";
-    const clean = String(name).trim().toLowerCase();
-    return CATEGORY_ALIAS_INDEX[clean] || ""; // retorna vazio se não reconhecido
-  }
-</script>
-      // Detectar banco automaticamente
-      const origem = detectOrigemCSV(first);
-      if(impOrigem.value==='auto' && origem) impOrigem.value = origem;
+    function splitCSV(line, sep){
+      const s = sep;
+      // simples: suporta campos entre aspas
+      const out = [];
+      let cur = '', inside = false;
+      for (let i=0;i<line.length;i++){
+        const ch = line[i];
+        if (ch === '"'){ inside = !inside; continue; }
+        if (ch === s && !inside){ out.push(cur); cur=''; continue; }
+        cur += ch;
+      }
+      out.push(cur);
+      return out.map(x=>x.trim());
+    }
 
-      const cols = first.split(sep).map(s=>s.trim().replace(/^"|"$/g,''));
-      const headerLikely = /(data|descri|valor|tipo|date|amount|description|categoria|hist|detalhe)/i.test(first);
-      mapHeader.checked = headerLikely;
-
-      const fillMap = (sel, guessNames) => {
-        sel.innerHTML = cols.map((c,i)=>`<option value="${i}">${escapeHtml(c||('Col '+(i+1)))}</option>`).join('');
-        const guess = cols.findIndex(c=> guessNames.some(g=> new RegExp(g,'i').test(c)));
-        if(guess>=0) sel.value = String(guess);
+    function suggestMappingByOrigin(headers){
+      const h = headers.map(x=>x.toLowerCase());
+      const setSel = (id, names) => {
+        const el = document.getElementById(id);
+        el.innerHTML = headers.map((x,i)=>`<option value="${i}">${x}</option>`).join('');
+        // tenta achar
+        for (const n of names){
+          const idx = h.findIndex(y => y.includes(n));
+          if (idx>=0){ el.value = idx; return; }
+        }
+        el.value = '';
       };
 
-      // Presets por banco
-      const origemVal = impOrigem.value;
-      if(origemVal === 'inter'){
-        fillMap(mapData, ['data','date']);
-        fillMap(mapDesc, ['descri','hist','detalhe']);
-        fillMap(mapVal,  ['valor','amount']);
-        fillMap(mapTipo, ['tipo','c/d','credit|debit']);
-      } else if(origemVal === 'nubank'){
-        fillMap(mapData, ['data','date','post_date']);
-        fillMap(mapDesc, ['descri','description','title']);
-        fillMap(mapVal,  ['valor','amount']);
-        fillMap(mapTipo, ['tipo','transaction_type','c/d']);
-      } else if(origemVal === 'mercadopago'){
-        fillMap(mapData, ['data','date']);
-        fillMap(mapDesc, ['descri','description','detalhe']);
-        fillMap(mapVal,  ['valor','amount']);
-        fillMap(mapTipo, ['tipo','type','c/d','credito|debito']);
-      } else {
-        fillMap(mapData, ['data','date']);
-        fillMap(mapDesc, ['descri','description','memo','hist']);
-        fillMap(mapVal,  ['valor','amount','credit','debit']);
-        fillMap(mapTipo, ['tipo','type','c/d','credit|debit']);
+      const origem = document.getElementById('impOrigem').value;
+
+      if (origem==='nubank' || (origem==='auto' && h.includes('title') && h.includes('amount'))) {
+        // Nubank CSV: columns: title, amount, category, time
+        setSel('mapDate', ['time','date','data']);
+        setSel('mapDesc', ['title','descricao','descrição','description']);
+        setSel('mapVal', ['amount','valor','value']);
+        setSel('mapType', ['type','tipo','c/d']);
+        return;
       }
 
-      impMap.style.display = '';
-      impPreview.style.display = 'none';
-      importBuffer = { kind:'csv', lines, sep, cols };
+      if (origem==='mercadopago' || (origem==='auto' && h.some(x=>x.includes('mercado pago') || x.includes('mercadopago')))) {
+        setSel('mapDate', ['data','date','fecha']);
+        setSel('mapDesc', ['descricao','descrição','description','detalle','detalhe','concepto']);
+        setSel('mapVal', ['valor','value','importe','monto']);
+        setSel('mapType', ['tipo','type','c/d']);
+        return;
+      }
+
+      if (origem==='inter' || (origem==='auto' && h.includes('historico') && h.some(x=>x.includes('valor') || x.includes('valor (r$)')))){
+        // Banco Inter CSV comum: Data, Historico, Valor (R$), Tipo (D/C)...
+        setSel('mapDate', ['data','date']);
+        setSel('mapDesc', ['historico','histórico','descricao','descrição']);
+        setSel('mapVal', ['valor','valor (r$)','amount','value']);
+        setSel('mapType', ['tipo','d/c','c/d']);
+        return;
+      }
+
+      // Genérico
+      setSel('mapDate', ['data','date']);
+      setSel('mapDesc', ['descricao','descrição','description','histórico','historico','title']);
+      setSel('mapVal', ['valor','value','amount','importe','monto']);
+      setSel('mapType', ['tipo','type','c/d']);
     }
 
-    function applyCSVMapping(){
-      if(!importBuffer || importBuffer.kind !== 'csv') return;
-      const { lines, sep } = importBuffer;
-      const dataIdx = parseInt(mapData.value,10);
-      const descIdx = parseInt(mapDesc.value,10);
-      const valIdx  = parseInt(mapVal.value,10);
-      const tipoIdx = parseInt(mapTipo.value,10);
-      const hasHeader = mapHeader.checked;
+    function applyMapping(){
+      mapped = [];
+      const iDate = parseInt(document.getElementById('mapDate').value,10);
+      const iDesc = parseInt(document.getElementById('mapDesc').value,10);
+      const iVal  = parseInt(document.getElementById('mapVal').value,10);
+      const iType = document.getElementById('mapType').value === '' ? null : parseInt(document.getElementById('mapType').value,10);
 
-      const rows = (hasHeader ? lines.slice(1) : lines).map(l=>{
-        const c = l.split(sep).map(s=> s.trim().replace(/^"|"$/g,''));
-        return normalizeRowCSV({
-          data: c[dataIdx], desc: c[descIdx], valor: c[valIdx], tipo: c[tipoIdx]
-        });
-      }).filter(r=> r.data && !isNaN(r.bruto));
-
-      buildPreview(rows);
-    }
-
-    function normalizeRowCSV(r){
-      const origem = impOrigem.value;
-      const data = normalizeDate(r.data);
-      const Udesc = (r.desc||'').toUpperCase();
-      let bruto = parsePtNumber(r.valor);
-      let tipo = (r.tipo||'').toUpperCase();
-
-      // Nubank: muitas vezes o sinal já define (negativo = débito)
-      if(origem === 'nubank' && !tipo){
-        tipo = bruto >= 0 ? 'C' : 'D';
-        bruto = Math.abs(bruto);
-      }
-      // Mercado Pago: idem
-      if(origem === 'mercadopago' && !tipo){
-        tipo = bruto >= 0 ? 'C' : 'D';
-        bruto = Math.abs(bruto);
-      }
-      // Banco Inter: pode vir "C" / "D" ou "Crédito/Débito"
-      if(origem === 'inter'){
-        if(/CRED/i.test(tipo)) tipo = 'C';
-        if(/DEB/i.test(tipo)) tipo = 'D';
-      }
-      if(!tipo){
-        // heurística genérica: se valor negativo => D
-        if((/^\s*-\s*/.test(r.valor)) || /-/.test(String(r.valor))) tipo = 'D';
-        else tipo = 'C';
-        bruto = Math.abs(bruto);
+      if (Number.isNaN(iDate) || Number.isNaN(iDesc) || Number.isNaN(iVal)){
+        alert('Mapeie Data, Descrição e Valor.'); return;
       }
 
-      return { data, desc: r.desc||'', bruto, tipo };
-    }
+      for (const row of parsedRows){
+        const rawDate = row[iDate];
+        const rawDesc = row[iDesc];
+        const rawVal  = row[iVal];
+        const rawType = iType!=null ? (row[iType]||'') : '';
 
-    function parseOFX(text){
-      const trs = [...text.matchAll(/<STMTTRN>[\s\S]*?<\/STMTTRN>/g)].map(m=>m[0]);
-      const rows = trs.map(block=>{
-        const get = tag => {
-          const m = block.match(new RegExp(`<${tag}>([^\\r\\n<]+)`));
-          return m ? m[1].trim() : '';
+        let valor = parseNum(rawVal);
+        // se tiver coluna tipo, interpreta C/D
+        let tipo = '';
+        const t = String(rawType||'').toUpperCase();
+        if (t.includes('D')) tipo='D';
+        else if (t.includes('C')) tipo='C';
+        else if (valor<0) tipo='D';
+        else tipo='C';
+
+        const tx = {
+          data: fmtDate(guessDate(rawDate)),
+          descricao: rawDesc || '',
+          valor: Math.abs(valor),
+          tipo, // C=Crédito(Entrada), D=Débito(Saída)
+          conta: document.getElementById('impConta').value,
+          categoriaCsv: '', // se o CSV trouxer categoria, pode ser extraída se você quiser extender
+          categoria: '',
+          loja: ''
         };
-        const dt = get('DTPOSTED');
-        const tipo = get('TRNTYPE');
-        const val = parseFloat((get('TRNAMT')||'0').replace(',', '.'));
-        const memo = get('MEMO') || get('NAME');
-        return {
-          data: normalizeOFXDate(dt),
-          desc: memo || '',
-          bruto: Math.abs(val),
-          tipo: /CREDIT/i.test(tipo) || (val>0) ? 'C' : 'D',
-        };
-      }).filter(r=> r.data && !isNaN(r.bruto));
-      buildPreview(rows);
+        applyCategoryRulesOrAliases(tx);
+        mapped.push(tx);
+      }
+      buildPreview();
     }
 
-    function buildPreview(rows){
-      const conta = impConta.value || (state.params.contas[0]||'Conta');
-      const enriched = rows.map(r=>{
-        const isCredit = r.tipo === 'C';
-        const valor = r.bruto;
-        const regra = matchRegra(r.desc);
-        return {
-          data: r.data,
-          conta,
-          desc: r.desc,
-          categoria: regra?.cat || guessCategoriaByDesc(r.desc) || '',
-          loja: regra?.loja || guessLojaByDesc(r.desc),
-          valor: valor,
-          tipo: isCredit ? 'entrada' : 'saida'
-        };
-      });
+    function guessDate(s){
+      const str = String(s).trim();
+      // tenta dd/mm/yyyy
+      let m = str.match(/^(\d{2})\/(\d{2})\/(\d{4})/);
+      if (m) return `${m[3]}-${m[2]}-${m[1]}`;
+      // yyyy-mm-dd
+      m = str.match(/^(\d{4})-(\d{2})-(\d{2})/);
+      if (m) return `${m[1]}-${m[2]}-${m[3]}`;
+      // yyyy-mm-ddTHH...
+      m = str.match(/^(\d{4})-(\d{2})-(\d{2})/);
+      if (m) return `${m[1]}-${m[2]}-${m[3]}`;
+      // fallback: hoje
+      const d = new Date(); return d.toISOString().slice(0,10);
+    }
 
-      const exists = new Set([
-        ...state.saidas.map(s=> hashTxn(s.data, s.valor, s.desc)),
-        ...state.entradas.map(e=> hashTxn(e.data, e.valor, e.desc)),
-      ]);
-      const unique = enriched.filter(r=> !exists.has(hashTxn(r.data, r.valor, r.desc)));
+    function parseOFX(file){
+      const fr = new FileReader();
+      fr.onload = () => {
+        const text = fr.result;
+        const txs = [];
+        // parse simples de OFX (STMTTRN)
+        const blocks = text.split('<STMTTRN>').slice(1);
+        for (const b of blocks){
+          const get = (tag) => {
+            const m = b.match(new RegExp(`<${tag}>([^<\\r\\n]+)`,'i'));
+            return m ? m[1].trim() : '';
+          };
+          const tipo = (get('TRNTYPE')||'').toUpperCase(); // DEBIT/CREDIT
+          const dt = get('DTPOSTED'); // 20240901...
+          const y = dt.slice(0,4), mo = dt.slice(4,6), da = dt.slice(6,8);
+          const valor = parseNum(get('TRNAMT'));
+          const desc = get('MEMO') || get('NAME') || '';
+          const tx = {
+            data: `${y}-${mo}-${da}`,
+            descricao: desc,
+            valor: Math.abs(valor),
+            tipo: valor < 0 || tipo==='DEBIT' ? 'D' : 'C',
+            conta: document.getElementById('impConta').value,
+            categoria: '',
+            loja: ''
+          };
+          applyCategoryRulesOrAliases(tx);
+          txs.push(tx);
+        }
+        parsedRows = [];
+        csvHeaders = [];
+        mapped = txs;
+        buildPreview();
+      };
+      fr.readAsText(file);
+    }
 
-      const tb = document.querySelector('#tblImpPrev tbody');
-      tb.innerHTML = unique.slice(0,1000).map(r=>`
-        <tr>
-          <td>${toBRDate(r.data)}</td>
-          <td>${escapeHtml(r.conta)}</td>
-          <td>${escapeHtml(r.desc)}</td>
-          <td>${escapeHtml(r.categoria||'—')}</td>
-          <td class="right">${fmtMoeda(r.valor)}</td>
-        </tr>
-      `).join('');
-      impPreview.style.display = '';
-      importBuffer = { kind:'preview', rows: unique };
+    function buildPreview(){
+      const box = document.getElementById('previewBox');
+      if (!mapped.length){
+        box.innerHTML = '<div class="muted" style="padding:8px">Sem dados para pré-visualizar.</div>'; return;
+      }
+      const rows = mapped.slice(0,200).map(x=>`<tr>
+        <td>${fmtDate(x.data)}</td>
+        <td>${x.descricao}</td>
+        <td>${x.tipo==='D' ? '-' : ''}${money(x.valor)}</td>
+        <td>${x.conta||''}</td>
+        <td>${x.categoria||''}</td>
+        <td>${x.loja||''}</td>
+      </tr>`).join('');
+      box.innerHTML = `<table>
+        <thead><tr><th>Data</th><th>Descrição</th><th>Valor</th><th>Conta</th><th>Categoria</th><th>Loja</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>`;
+    }
+
+    function applyCategoryRulesOrAliases(tx){
+      const rules = loadRules();
+      const desc = (tx.descricao || '').toLowerCase();
+      for (const r of rules) {
+        if (r.contains && desc.includes(r.contains)) {
+          tx.categoria = normalizeCategory(r.category || r.categoria || "");
+          if (r.store) tx.loja = r.store;
+          break;
+        }
+      }
+      if (!tx.categoria && tx.categoriaCsv) {
+        const norm = normalizeCategory(tx.categoriaCsv);
+        if (norm) tx.categoria = norm;
+      }
+      return tx;
     }
 
     function confirmImport(){
-      if(!importBuffer || importBuffer.kind!=='preview') return;
-      const rows = importBuffer.rows;
-      let countE=0, countS=0;
-      rows.forEach(r=>{
-        if(r.tipo==='entrada'){
-          state.entradas.push({
-            id: crypto.randomUUID(),
-            data: r.data,
-            conta: r.conta,
-            categoria: r.categoria || 'Outros',
-            valor: r.valor,
-            origem: '',
-            desc: r.desc,
-            obs: 'importado'
-          });
-          countE++;
-        } else {
-          const s = {
-            id: null,
-            data: r.data,
-            conta: r.conta,
-            categoria: r.categoria || 'Outros',
-            sub: '',
-            desc: r.desc,
-            loja: r.loja || '',
-            fpag: '',
-            valor: r.valor,
-            parcelaN: 1, parcelaT: 1,
-            centro: '',
-            obs: 'importado'
-          };
-          s.id = uniqueIDSaida(s);
-          state.saidas.push(s);
-          countS++;
-        }
-      });
-      save(); render();
-      alert(`Importação concluída: ${countE} entradas e ${countS} saídas adicionadas.`);
-      cancelImport();
-    }
-    function cancelImport(){
-      importBuffer = [];
-      impMap.style.display = 'none';
-      impPreview.style.display = 'none';
-      impFile.value = null;
+      if (!mapped.length) return alert('Nada para importar.');
+      const entradas = loadEntradas();
+      const saidas = loadSaidas();
+      const seen = new Set([
+        ...entradas.map(txHash),
+        ...saidas.map(txHash)
+      ]);
+      let addIn=0, addOut=0, dup=0;
+
+      for (const x of mapped){
+        const sign = x.tipo === 'D' ? -1 : 1;
+        const tx = {
+          data: fmtDate(x.data),
+          descricao: x.descricao,
+          valor: Math.abs(parseNum(x.valor)),
+          conta: x.conta,
+          categoria: x.categoria || '',
+          loja: x.loja || ''
+        };
+        const h = txHash({ ...tx, valor: sign * tx.valor });
+        if (seen.has(h)){ dup++; continue; }
+        seen.add(h);
+        if (sign<0){ saidas.push(tx); addOut++; } else { entradas.push(tx); addIn++; }
+      }
+      saveEntradas(entradas); saveSaidas(saidas);
+      alert(`Importação concluída.\nEntradas: ${addIn}\nSaídas: ${addOut}\nDuplicados ignorados: ${dup}`);
+      mapped = []; buildPreview();
+      refreshDashboard(); renderEntradas(); renderSaidas();
     }
 
     // Regras
-    function addRegra(){
-      const key = (rcKey.value||'').trim();
-      const cat = rcCat.value||'';
-      const loja = (rcLoja.value||'').trim();
-      if(!key || !cat) return alert('Informe palavra e categoria.');
-      state.regras.push({ key: key.toUpperCase(), cat, loja });
-      save(); renderRegras();
-      rcKey.value=''; rcLoja.value='';
-      alert('Regra adicionada.');
+    function renderRules(){
+      const rules = loadRules();
+      const html = rules.map((r,i)=>`<div class="row" style="justify-content:space-between;border:1px solid var(--border);border-radius:8px;padding:8px">
+        <div>
+          <div><strong>Se contiver:</strong> ${r.contains}</div>
+          <div class="muted">Categoria: ${r.category || r.categoria} ${r.store? `• Loja: ${r.store}`:''}</div>
+        </div>
+        <div><button class="btn alt" onclick="delRule(${i})">Excluir</button></div>
+      </div>`).join('') || '<div class="muted">Nenhuma regra criada.</div>';
+      document.getElementById('rulesList').innerHTML = html;
     }
-    function delRegra(idx){ state.regras.splice(idx,1); save(); renderRegras(); }
-    function renderRegras(){
-      const tb = document.querySelector('#tblRegras tbody');
-      if(!tb) return;
-      tb.innerHTML = (state.regras||[]).map((r,i)=>`
-        <tr>
-          <td>${escapeHtml(r.key)}</td>
-          <td>${escapeHtml(r.cat)}</td>
-          <td>${escapeHtml(r.loja||'')}</td>
-          <td class="right"><button class="btn ghost" onclick="delRegra(${i})">Excluir</button></td>
-        </tr>
-      `).join('');
+    function addRule(){
+      const text = document.getElementById('ruleText').value.trim();
+      const catRaw = document.getElementById('ruleCategory').value;
+      const store = document.getElementById('ruleStore').value.trim();
+      if (!text) { alert('Informe um texto para a regra'); return; }
+      const category = normalizeCategory(catRaw);
+      if (!category) { alert('Selecione uma categoria válida'); return; }
+      const rules = loadRules();
+      rules.push({ contains: text.toLowerCase(), category, store });
+      saveRules(rules); renderRules();
+      document.getElementById('ruleText').value=''; document.getElementById('ruleStore').value=''; document.getElementById('ruleCategory').value='';
     }
-    function matchRegra(desc){
-      const U = (desc||'').toUpperCase();
-      return (state.regras||[]).find(r=> U.includes(r.key));
+    function delRule(i){ const rules = loadRules(); rules.splice(i,1); saveRules(rules); renderRules(); }
+
+    // ==========================
+    // Configurações (contas, lojas, backup)
+    // ==========================
+    function saveConfig(){
+      const accs = (document.getElementById('cfgAccounts').value||'').split('\n').map(x=>x.split(';')).flat().map(x=>x.trim()).filter(Boolean);
+      const stores = (document.getElementById('cfgStores').value||'').split('\n').map(x=>x.split(';')).flat().map(x=>x.trim()).filter(Boolean);
+      if (accs.length) saveContas(accs);
+      if (stores.length) saveStores(stores);
+      fillSelects();
+      alert('Configurações salvas.');
     }
 
-    // Helpers de importação
-    function parsePtNumber(s){
-      if(typeof s !== 'string') return Number(s)||NaN;
-      const t = s.trim();
-      const hasComma = t.includes(',');
-      const hasDot = t.includes('.');
-      if(hasComma && hasDot){
-        if(t.lastIndexOf(',') > t.lastIndexOf('.')) return Number(t.replace(/\./g,'').replace(',','.'));
-        return Number(t.replace(/,/g,''));
-      } else if(hasComma){
-        return Number(t.replace(/\./g,'').replace(',','.'));
-      } else {
-        return Number(t);
-      }
-    }
-    function normalizeDate(s){
-      if(!s) return '';
-      const t = s.trim();
-      if(/^\d{4}-\d{2}-\d{2}$/.test(t)) return t;
-      if(/^\d{2}\/\d{2}\/\d{4}$/.test(t)){ const [d,m,y]=t.split('/'); return `${y}-${m}-${d}`; }
-      if(/^\d{2}-\d{2}-\d{4}$/.test(t)){ const [d,m,y]=t.split('-'); return `${y}-${m}-${d}`; }
-      const dt = new Date(t);
-      if(!isNaN(dt)) return dt.toISOString().slice(0,10);
-      return '';
-    }
-    function normalizeOFXDate(dt){
-      if(!dt) return '';
-      const y = dt.slice(0,4), m = dt.slice(4,6), d = dt.slice(6,8);
-      if(y && m && d) return `${y}-${m}-${d}`;
-      return '';
-    }
-    function hashTxn(data, valor, desc){
-      return `${data}|${(Number(valor)||0).toFixed(2)}|${(desc||'').slice(0,80).toUpperCase()}`;
-    }
-    function guessCategoriaByDesc(desc){
-      const u = (desc||'').toUpperCase();
-      if(/SUPERMERC|MERCADO|CARREFOUR|PÃO DE AÇÚCAR|ASSAÍ|ATACAD|ZAFARI|EXTRA/.test(u)) return 'Alimentação';
-      if(/IFOOD|RAPPI|UBER EATS|DELIVERY/.test(u)) return 'Alimentação';
-      if(/UBER|99|CABIFY|TAXI/.test(u)) return 'Transporte';
-      if(/POSTO|COMBUST|SHELL|IPIRANGA|BR /.test(u)) return 'Transporte';
-      if(/FARMAC|DROGA|PANVEL|PACHECO|RAIA/.test(u)) return 'Saúde';
-      if(/NETFLIX|SPOTIFY|YOUTUBE|DISNEY|HBO|STEAM/.test(u)) return 'Lazer';
-      if(/ALUGUEL|IMOB|CONDOM|IPTU|LUZ|ÁGUA|ENERGIA|COPEL|ENEL|SABESP|VIVO|CLARO|TIM|OI/.test(u)) return 'Moradia';
-      if(/FACUL|ESCOLA|CURSO|ALURA|UDEMY|COURSERA/.test(u)) return 'Educação';
-      if(/SEGURO|IPVA|DPVAT|MULTA/.test(u)) return 'Impostos';
-      return null;
-    }
-    function guessLojaByDesc(desc){
-      const u = (desc||'').toUpperCase();
-      const m = u.match(/[A-Z0-9][A-Z0-9\s\-]{3,20}/);
-      return m ? m[0].trim().replace(/\s+/g,' ') : '';
-    }
-
-    // ========= Export / Import JSON =========
-    function downloadJSON(){
-      const blob = new Blob([JSON.stringify(state,null,2)], {type:'application/json'});
+    function downloadBackup(){
+      const data = {
+        entradas: loadEntradas(),
+        saidas: loadSaidas(),
+        itens: loadItens(),
+        contas: loadContas(),
+        regras: loadRules(),
+        orc: loadOrc(),
+        stores: loadStores()
+      };
+      const blob = new Blob([JSON.stringify(data,null,2)], {type:'application/json'});
       const a = document.createElement('a');
       a.href = URL.createObjectURL(blob);
-      a.download = 'controle_gastos.json';
+      a.download = 'backup-controle-gastos.json';
       a.click();
-      URL.revokeObjectURL(a.href);
-    }
-    function importJSON(ev){
-      const f = ev.target.files[0]; if(!f) return;
-      const reader = new FileReader();
-      reader.onload = ()=>{
-        try{
-          const obj = JSON.parse(reader.result);
-          if(!obj || !obj.params) throw new Error('Arquivo inválido.');
-          Object.assign(state, obj);
-          save(); render(); alert('Importado com sucesso.');
-        }catch(e){ alert('Falha ao importar: ' + e.message); }
-      };
-      reader.readAsText(f);
     }
 
-    // ========= Init =========
-    function init(){
-      dashMes.value = todayYM();
-      fillSelects();
-      render();
+    function restoreBackup(){
+      const f = document.getElementById('restoreFile').files[0];
+      if (!f) return alert('Selecione o arquivo de backup.');
+      const fr = new FileReader();
+      fr.onload = () => {
+        try {
+          const data = JSON.parse(fr.result);
+          if (data.entradas) saveEntradas(data.entradas);
+          if (data.saidas) saveSaidas(data.saidas);
+          if (data.itens) saveItens(data.itens);
+          if (data.contas) saveContas(data.contas);
+          if (data.regras) saveRules(data.regras);
+          if (data.orc) saveOrc(data.orc);
+          if (data.stores) saveStores(data.stores);
+          fillSelects(); refreshDashboard(); renderEntradas(); renderSaidas(); renderItens(); renderBudget();
+          alert('Backup restaurado.');
+        } catch(e){ alert('Arquivo inválido.'); }
+      };
+      fr.readAsText(f);
     }
-    init();
+
   </script>
 </body>
 </html>
