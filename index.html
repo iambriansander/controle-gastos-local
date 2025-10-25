@@ -240,6 +240,24 @@ Posto Z</textarea>
       </table>
     </section>
 
+    <script>
+  const CATEGORIES = [
+    "Moradia",
+    "Contas e serviços",
+    "Amizades e família",
+    "Roupas",
+    "Doações",
+    "Supermercado",
+    "Entretenimento",
+    "Compras",
+    "Serviços profissionais",
+    "Comida e bebida",
+    "Transporte",
+    "Saúde e cuidados pessoais"
+  ];
+
+      
+
     <!-- SAIDAS -->
     <section id="saidas" class="tab card" style="display:none">
       <h3 style="margin:0 0 10px;font-size:16px">Lançar saída</h3>
@@ -756,6 +774,40 @@ Posto Z</textarea>
       const lines = text.replace(/\r\n/g, '\n').split('\n').filter(l => l.trim().length>0);
       const first = lines[0];
 
+      const CATEGORY_ALIASES = {
+    "Moradia": ["Aluguel", "Condomínio", "IPTU", "Habitação", "Aluguel/Moradia"],
+    "Contas e serviços": ["Contas", "Utilidades", "Luz", "Água", "Gás", "Internet", "Telefonia", "Energia"],
+    "Amizades e família": ["Família", "Presentes", "Crianças", "Pais", "Amigos", "Parentes"],
+    "Roupas": ["Vestuário", "Moda", "Calçados"],
+    "Doações": ["Caridade", "ONG", "Contribuições"],
+    "Supermercado": ["Mercado", "Hipermercado", "Atacado"],
+    "Entretenimento": ["Lazer", "Streaming", "Cinema", "Shows", "Games"],
+    "Compras": ["E-commerce", "Lojas", "Eletrônicos", "Casa e Decoração", "Casa & Decoração"],
+    "Serviços profissionais": ["Contabilidade", "Jurídico", "Consultoria", "Freelancer"],
+    "Comida e bebida": ["Restaurantes", "Lanches", "Bar", "Delivery", "iFood", "Rappi", "Uber Eats"],
+    "Transporte": ["Uber", "99", "Combustível", "Estacionamento", "Pedágio", "Transporte público", "Bilhete Único", "Metro"],
+    "Saúde e cuidados pessoais": ["Farmácia", "Plano de Saúde", "Exames", "Academia", "Barbearia", "Salão"]
+  };
+
+  // Cria um índice alias->categoria alvo
+  const CATEGORY_ALIAS_INDEX = (() => {
+    const idx = {};
+    for (const [target, list] of Object.entries(CATEGORY_ALIASES)) {
+      for (const alias of list) {
+        idx[alias.toLowerCase()] = target;
+      }
+    }
+    // também mapeia o próprio nome (caso venha com variações de acento/maiúsculas)
+    for (const c of CATEGORIES) idx[c.toLowerCase()] = c;
+    return idx;
+  })();
+
+  function normalizeCategory(name) {
+    if (!name) return "";
+    const clean = String(name).trim().toLowerCase();
+    return CATEGORY_ALIAS_INDEX[clean] || ""; // retorna vazio se não reconhecido
+  }
+</script>
       // Detectar banco automaticamente
       const origem = detectOrigemCSV(first);
       if(impOrigem.value==='auto' && origem) impOrigem.value = origem;
